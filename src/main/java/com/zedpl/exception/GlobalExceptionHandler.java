@@ -3,7 +3,9 @@ package com.zedpl.exception;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -89,6 +91,19 @@ public class GlobalExceptionHandler {
             message += ". Allowed values: " + allowed;
         }
         return problem(HttpStatus.BAD_REQUEST, message);
+    }
+
+    /** Handles missing required query parameters (e.g. ?stream= required). */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ProblemDetail handleMissingServletRequestParameter(MissingServletRequestParameterException ex) {
+        return problem(HttpStatus.BAD_REQUEST,
+                "Required request parameter '" + ex.getParameterName() + "' is not present");
+    }
+
+    /** Handles malformed JSON bodies. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleNotReadable(HttpMessageNotReadableException ex) {
+        return problem(HttpStatus.BAD_REQUEST, "Malformed JSON request body");
     }
 
     /** Handles illegal argument exceptions thrown in service code. */
